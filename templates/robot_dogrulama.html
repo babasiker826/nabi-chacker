@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Güvenlik Doğrulaması | CC Checker</title>
+    <style>
+        /* (Senin verdiğin robot_dogrulama.css stilleri tam olarak buraya) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        body {
+            background: #000;
+            color: #0f0;
+            overflow: hidden;
+            height: 100vh;                                                                   display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #001a00, #000);
+        }
+
+        .container {
+            text-align: center;
+            padding: 30px;
+            border: 2px solid #0f0;
+            border-radius: 10px;
+            background: rgba(0, 20, 0, 0.7);
+            box-shadow: 0 0 20px #0f0, 0 0 40px #0f0 inset;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 28px;                                                                 margin-bottom: 20px;
+            text-shadow: 0 0 10px #0f0;
+            letter-spacing: 2px;
+        }
+
+        p {
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .verify-btn {
+            background: transparent;
+            border: 2px solid #0f0;
+            color: #0f0;
+            padding: 15px 40px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .verify-btn:hover {
+            background: #0f0;
+            color: #000;
+            box-shadow: 0 0 20px #0f0;
+        }
+
+        .loading {
+            display: none;
+            margin: 30px auto;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 255, 0, 0.3);
+            border-radius: 50%;
+            border-top-color: #0f0;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }                                                                        
+        .success {
+            display: none;
+            color: #0f0;
+            font-size: 24px;
+            margin-top: 20px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>                                                                               <div class="matrix-bg" id="matrixBg"></div>
+
+    <div class="container">
+        <h1>GÜVENLİK DOĞRULAMASI</h1>
+        <p>Devam etmek için lütfen aşağıdaki butona tıklayarak insan olduğunuzu doğrulayın.</p>
+
+        <button class="verify-btn" id="verifyBtn">DOĞRULAMA YAP</button>
+
+        <div class="loading" id="loading"></div>
+        <div class="success" id="success">Doğrulama Başarılı! Yönlendiriliyorsunuz...</div>
+    </div>
+
+    <script>
+        // Matrix efekti (küçük versiyon)
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const matrixBg = document.getElementById('matrixBg');
+        matrixBg.appendChild(canvas);
+
+        function resizeCanvas(){
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+
+        const chars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリ ルレロワヲン";
+        const charArr = chars.split("");
+        const font_size = 14;
+        let columns = Math.floor(canvas.width / font_size);
+        const drops = [];
+        for(let x = 0; x < columns; x++) drops[x] = 1;
+
+        function draw() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.04)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#0F0";
+            ctx.font = font_size + "px arial";
+            for(let i = 0; i < drops.length; i++) {
+                const text = charArr[Math.floor(Math.random() * charArr.length)];
+                ctx.fillText(text, i * font_size, drops[i] * font_size);
+                if(drops[i] * font_size > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(draw, 35);
+        window.addEventListener('resize', function(){
+            resizeCanvas();
+            columns = Math.floor(canvas.width / font_size);
+            drops.length = 0;
+            for(let x = 0; x < columns; x++) drops[x] = 1;
+        });
+
+        // Doğrulama butonu: artık server-side session endpointine POST atıyor
+        document.getElementById('verifyBtn').addEventListener('click', async function() {
+            const btn = this;
+            const loading = document.getElementById('loading');
+            const success = document.getElementById('success');
+
+            btn.style.display = 'none';
+            loading.style.display = 'block';
+
+            try {
+                const res = await fetch('/verify_human', { method: 'POST', credentials: 'same-origin' });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    loading.style.display = 'none';
+                    success.style.display = 'block';
+                    // sunucu session set edildi, root'a yönlendir
+                    setTimeout(() => { window.location.href = '/'; }, 1200);
+                    return;
+                } else {
+                    throw new Error(data.message || 'Doğrulama hatası');
+                }
+            } catch (err) {
+                loading.style.display = 'none';
+                btn.style.display = 'block';
+                alert('Doğrulama başarısız: ' + err.message);
+            }
+        });
+
+        // Klavye/sağ-tık korumaları (hafif)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12') { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C')) { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.key === 'u') { e.preventDefault(); return false; }
+        });
+        document.addEventListener('contextmenu', function(e){ e.preventDefault(); return false; });
+    </script>
+</body>
+</html>
