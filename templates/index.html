@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Lüks CC Checker | Güvenli Kart Doğrulama</title>
+
+    <!-- INLINE CSS (güncellenmiş hacker stili + yeni arka plan) -->
+    <style>
+/* ---------- GÜNCELLENMİŞ HACKER STİLİ ---------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Courier New', monospace;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+body {
+    background: #000;
+    color: #0f0;
+    overflow-x: hidden;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* ÖZEL ARKA PLAN KONTEYNERİ (Matrix canvas kaldırıldı, yerine canvas tabanlı particle/bağlantı animasyonu) */
+.matrix-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 20% 10%, rgba(0,255,150,0.03), transparent 8%),
+                radial-gradient(ellipse at 80% 80%, rgba(0,150,255,0.03), transparent 8%);
+}
+
+/* 3D Hacker Efektleri - GELİŞTİRİLMİŞ */
+.hacker-effects {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.glowing-orbs {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+                                                                                 .orb {                                                                               position: absolute;                                                              border-radius: 50%;                                                              filter: blur(60px);
+    opacity: 0.8;
+}
+
+.orb-1 {
+    width: 400px;                                                                    height: 400px;
+    background: #0f0;
+    top: 10%;
+    left: 10%;
+    animation: float 15s infinite ease-in-out;
+}
+
+.orb-2 {
+    width: 300px;                                                                    height: 300px;
+    background: #00ffff;
+    top: 60%;
+    right: 10%;
+    animation: float 12s infinite ease-in-out reverse;
+}
+
+.orb-3 {
+    width: 250px;
+    height: 250px;
+    background: #ff00ff;
+    bottom: 20%;
+    left: 20%;
+    animation: float 18s infinite ease-in-out;
+}
+
+.orb-4 {
+    width: 200px;
+    height: 200px;
+    background: #ffff00;
+    top: 30%;
+    right: 30%;
+    animation: float 14s infinite ease-in-out;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }                                25% { transform: translate(80px, -50px) scale(1.2); }
+    50% { transform: translate(-50px, 60px) scale(0.8); }
+    75% { transform: translate(-60px, -40px) scale(1.1); }
+}
+
+/* Küçük binary çizgi efekti (matrix hissiyatını çok azaltmak için çok subtile indirildi) */
+.binary-stream {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 70%, rgba(0, 255, 0, 0.06) 100%);
+    background-size: 200px 200px;
+    animation: stream 30s infinite linear;
+    opacity: 0.12;
+}
+
+@keyframes stream {
+    0% { background-position: 0 0; }
+    100% { background-position: 400px 400px; }
+}
+
+/* Canvas için üst katman (particle canvas) */
+#bgCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Ana Container */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Header - DAHA HACKER VARI */
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 30px;
+    border: 3px solid #0f0;
+    border-radius: 15px;
+    background: rgba(0, 20, 0, 0.8);
+    box-shadow:
+        0 0 30px #0f0,
+        inset 0 0 20px rgba(0, 255, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.header::before {                                                                    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;                                                                     height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(0, 255, 0, 0.06), transparent);
+    animation: shine 3s infinite linear;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }         }
+
+.title {
+    font-size: 3.5rem;                                                               margin-bottom: 15px;
+    text-shadow:
+        0 0 10px #0f0,                                                                   0 0 20px #0f0,
+        0 0 30px #0f0;
+    position: relative;                                                              display: inline-block;
+    background: linear-gradient(45deg, #0f0, #00ffff, #ff00ff);
+    -webkit-background-clip: text;                                                   -webkit-text-fill-color: transparent;
+    animation: title-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes title-glow {
+    from { filter: hue-rotate(0deg); }                                               to { filter: hue-rotate(360deg); }
+}
+
+.glitch {
+    position: relative;
+}
+                                                                                 .glitch::before, .glitch::after {                                                    content: attr(data-text);
+    position: absolute;
+    top: 0;                                                                          left: 0;
+    width: 100%;
+    height: 100%;
+}                                                                                
+.glitch::before {
+    left: 4px;
+    text-shadow: -4px 0 #ff00ff;                                                     clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim 3s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+    left: -4px;
+    text-shadow: -4px 0 #00ffff;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim2 3s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+    0% { clip: rect(42px, 9999px, 44px, 0); opacity: 0.5; }
+    5% { clip: rect(12px, 9999px, 59px, 0); opacity: 0.8; }
+    10% { clip: rect(48px, 9999px, 29px, 0); opacity: 0.3; }
+    15% { clip: rect(42px, 9999px, 73px, 0); opacity: 0.6; }
+    20% { clip: rect(63px, 9999px, 27px, 0); opacity: 0.9; }                         25% { clip: rect(34px, 9999px, 55px, 0); opacity: 0.4; }
+    30% { clip: rect(86px, 9999px, 73px, 0); opacity: 0.7; }
+    100% { clip: rect(73px, 9999px, 99px, 0); opacity: 0.5; }
+}
+
+.subtitle {
+    font-size: 1.3rem;
+    opacity: 0.9;
+    text-shadow: 0 0 10px #0f0;
+}
+
+/* Uyarı Mesajı */
+.warning-message {
+    background: rgba(0,0,0,0.78);
+    border: 1px solid rgba(0,255,0,0.25);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 20px 0;
+    text-align: left;
+    font-size: 0.95rem;
+    color: #fff;
+    box-shadow: 0 8px 30px rgba(0,255,0,0.06), 0 0 40px rgba(0,255,0,0.04);
+    z-index: 1000;
+    position: relative;
+}
+
+.warning-message strong {
+    color: #ff8c00;
+    display: block;
+    margin-bottom: 6px;
+    font-size: 1rem;
+}
+
+.warning-message .highlight {
+    background: rgba(0,255,180,0.06);
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #9ff;
+}
+
+.warning-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;                                                                      background: transparent;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #fff;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+                                                                                 .warning-message strong {
+    color: #ff8c00;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 1rem;
+}
+
+/* Form */
+.card-form {                                                                         background: rgba(0, 20, 0, 0.9);
+    border: 3px solid #0f0;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow:
+        0 0 30px #0f0,
+        inset 0 0 20px rgba(0, 255, 0, 0.2);
+    position: relative;
+}
+
+.card-form::before {
+    content: 'SECURE_ENCRYPTED_CHANNEL_ACTIVE';
+    position: absolute;
+    top: -10px;
+    left: 50%;                                                                       transform: translateX(-50%);                                                     background: #000;                                                                color: #0f0;                                                                     padding: 5px 15px;
+    font-size: 0.8rem;
+    border: 1px solid #0f0;
+    border-radius: 10px;
+}
+                                                                                 .form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(0, 255, 0, 0.5);
+}
+
+.form-header h2 {
+    font-size: 1.5rem;
+    text-shadow: 0 0 10px #0f0;                                                  }
+
+.security-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.secure-text {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.secure-icon {
+    font-size: 1.2rem;
+}
+
+.input-group {
+    margin-bottom: 25px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    text-shadow: 0 0 5px #0f0;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px;
+    background: rgba(0, 30, 0, 0.9);
+    border: 2px solid #0f0;
+    border-radius: 8px;
+    color: #0f0;
+    font-size: 1.1rem;
+    transition: all 0.3s;
+    font-family: 'Courier New', monospace;
+}
+
+.input-group input:focus {
+    outline: none;
+    box-shadow: 0 0 20px #0f0;
+    background: rgba(0, 50, 0, 0.9);
+    border-color: #00ff00;
+}
+
+.input-row {
+    display: flex;
+    gap: 20px;
+}
+
+.input-row .input-group {
+    flex: 1;
+}
+
+.check-btn {
+    width: 100%;
+    padding: 20px;
+    background: transparent;
+    border: 3px solid #0f0;
+    color: #0f0;
+    font-size: 1.3rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    margin-top: 20px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}                                                                                
+.check-btn:hover {
+    background: #0f0;
+    color: #000;
+    box-shadow: 0 0 30px #0f0;
+    transform: translateY(-2px);
+}
+
+.check-btn:active {
+    transform: translateY(0);
+}
+
+.btn-loader {
+    display: none;
+    width: 25px;
+    height: 25px;
+    border: 3px solid rgba(0, 255, 0, 0.3);
+    border-radius: 50%;
+    border-top-color: #0f0;                                                          animation: spin 1s linear infinite;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}                                                                                
+@keyframes spin {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Sonuçlar */
+.result-container {
+    background: rgba(0, 20, 0, 0.9);
+    border: 3px solid #0f0;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 0 30px #0f0;
+    display:none;
+    position: relative;                                                          }
+
+.result-container h3 {
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 1.5rem;
+    text-shadow: 0 0 10px #0f0;
+}
+
+.result-card {
+    padding: 25px;
+    border-radius: 10px;
+    background: rgba(0, 30, 0, 0.7);
+    border: 1px solid #0f0;
+}
+
+.result-status {
+    font-size: 1.4rem;                                                               font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 15px;                                                                   border-radius: 8px;
+    text-transform: uppercase;                                                       letter-spacing: 1px;
+}                                                                                
+.status-live {
+    background: rgba(0, 255, 0, 0.3);
+    color: #0f0;
+    border: 2px solid #0f0;
+    box-shadow: 0 0 20px #0f0;                                                   }
+
+.status-dead {
+    background: rgba(255, 0, 0, 0.3);
+    color: #f00;                                                                     border: 2px solid #f00;
+    box-shadow: 0 0 20px #f00;
+}                                                                                
+.status-error {
+    background: rgba(255, 165, 0, 0.3);
+    color: #ffa500;
+    border: 2px solid #ffa500;
+    box-shadow: 0 0 20px #ffa500;
+}                                                                                
+.result-details {
+    font-family: 'Courier New', monospace;                                           white-space: pre-wrap;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 3px solid #0f0;
+}                                                                                
+/* Footer */
+.footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid rgba(0, 255, 0, 0.5);
+    opacity: 0.9;
+}
+
+.protection-badge {                                                                  display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}                                                                                
+.protection-badge span {                                                             background: rgba(0, 255, 0, 0.3);
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    border: 1px solid #0f0;
+}
+                                                                                 /* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    .title {
+        font-size: 2.5rem;
+    }
+
+    .input-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .protection-badge {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .header {
+        padding: 20px;
+    }
+}
+    </style>
+</head>
+<body>
+    <!-- Matrix arkaplan (canvas olarak artık particle ağı var) -->
+    <div class="matrix-bg" id="matrixBg">
+        <canvas id="bgCanvas"></canvas>
+    </div>
+
+    <!-- 3D Hacker Efektleri -->
+    <div class="hacker-effects">
+        <div class="glowing-orbs">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="orb orb-3"></div>
+            <div class="orb orb-4"></div>
+        </div>
+        <div class="binary-stream"></div>
+    </div>
+
+    <!-- Ana Container -->
+    <div class="container">
+        <header class="header">
+            <h1 class="title glitch" data-text="LÜKS CC CHECKER">LÜKS CC CHECKER</h1>
+            <p class="subtitle">Güvenli Kart Doğrulama Sistemi</p>
+        </header>
+
+        <!-- UYARI MESAJI -->
+        <div class="warning-message" id="warningMessage">
+            <button class="warning-close" aria-label="Kapat" onclick="this.parentElement.style.display='none'">✕</button>
+            <strong>⚠️ ÖNEMLİ UYARI</strong>
+            <p style="margin-bottom:8px;">Bu CC checker sitesi <span class="highlight">iyzico</span> ödeme yöntemine bağlıdır. Bu ödeme yöntemi <strong>sadece TR kartlarını</strong> kontrol edebilir. Diğer kartlar yanlış pozitif/negatif sonuç verebilir. Lütfen yalnızca TR kartları deneyiniz.</p>
+            <p style="margin:0.2rem 0 0 0; font-size:0.9rem; color:#cfe;">Arka plandaki ışıklar metni zor okunur hale getirdiyse, bu uyarıyı kapatmak için kutudaki <strong>✕</strong> </p>
+        </div>
+
+        <main class="main-content">
+            <div class="card-form">
+                <div class="form-header">
+                    <h2>KART BİLGİLERİNİ GİRİN</h2>
+                    <div class="security-indicator">
+                        <span class="secure-text">GÜVENLİ BAĞLANTI</span>
+                        <div class="secure-icon">🔒</div>
+                    </div>
+                </div>
+
+                <form id="ccForm">
+                    <!-- CSRF Token Gizli Input -->
+                    <input type="hidden" id="csrfToken" name="csrf_token" value="{{ csrf_token }}">
+
+                    <div class="input-group">
+                        <label for="ccNumber">Kart Numarası</label>
+                        <input type="text" id="ccNumber" maxlength="19" placeholder="1234 5678 9012 3456" required>
+                    </div>
+
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="expMonth">Son Kullanma Ayı</label>
+                            <input type="text" id="expMonth" maxlength="2" placeholder="MM" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="expYear">Son Kullanma Yılı</label>
+                            <input type="text" id="expYear" maxlength="2" placeholder="YY" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="cvv">CVV</label>
+                            <input type="text" id="cvv" maxlength="3" placeholder="123" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="check-btn" id="checkBtn">
+                        <span class="btn-text">KARTI KONTROL ET</span>
+                        <div class="btn-loader" id="btnLoader"></div>
+                    </button>
+                </form>
+            </div>
+
+            <div class="result-container" id="resultContainer">
+                <h3>SONUÇLAR</h3>
+                <div class="result-card" id="resultCard">
+                    <div class="result-status" id="resultStatus"></div>
+                    <div class="result-details" id="resultDetails"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>© 2023 Lüks CC Checker | Tüm hakları saklıdır</p>
+            <div class="protection-badge">
+                <span>DDOS KORUMALI</span>
+                <span>SQL ENJEKSİYON KORUMALI</span>
+                <span>GÜVENLİ API</span>
+                <span>CSRF KORUMALI</span>
+                <span>TR KART DESTEKLİ</span>                                                </div>
+        </footer>
+    </div>
+
+    <!-- INLINE JS (yeni arka plan animasyonu: particle network + glow blobs) -->
+    <script>
+/* ---------- script.js içeriği (CSRF token desteği eklendi) ---------- */
+document.addEventListener('DOMContentLoaded', function() {
+    // Yeni özel arka plan efektini başlat
+    initCustomBackground();
+
+    // Form işleyicisi
+    const form = document.getElementById('ccForm');
+    if (form) form.addEventListener('submit', handleFormSubmit);
+
+    // Kart numarası formatlama
+    const ccInput = document.getElementById('ccNumber');
+    if (ccInput) ccInput.addEventListener('input', formatCardNumber);
+
+    // Güvenlik önlemleri
+    implementSecurityMeasures();
+
+    // Terminal efekti başlat
+    startTerminalEffect();
+});
+
+// ======= YENİ: Particle network + glow blobs arka plan =======
+function initCustomBackground() {
+    const canvas = document.getElementById('bgCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
+
+    const particles = [];
+    const PARTICLE_COUNT = Math.max(40, Math.floor((w * h) / 70000)); // ekran boyutuna göre ölçek
+    const MAX_DIST = 180; // bağlantı çizgisi gösterme mesafesi
+
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+
+    class Particle {
+        constructor() {
+            this.x = rand(0, w);
+            this.y = rand(0, h);
+            this.vx = rand(-0.4, 0.4);
+            this.vy = rand(-0.4, 0.4);
+            this.size = rand(1.2, 3.5);
+            // Renk varyasyonu
+            const hue = rand(140, 200); // yeşil-cyan aralığı
+            this.color = `hsl(${hue} ${rand(60,100)}% ${rand(45,60)}%)`;
+        }
+
+        move() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.x < -20 || this.x > w + 20) this.vx *= -1;
+            if (this.y < -20 || this.y > h + 20) this.vy *= -1;
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.fillStyle = this.color;
+            ctx.shadowColor = this.color;
+            ctx.shadowBlur = 12;
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    function initParticles() {
+        particles.length = 0;
+        for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+    }
+
+    // Arka planda yumuşak nebula blobları çiz (çok hafif, CPU dostu)
+    const nebulas = [
+        {x: w*0.18, y: h*0.12, r: Math.max(w,h)*0.35, hue: 170, a:0.035},
+        {x: w*0.85, y: h*0.85, r: Math.max(w,h)*0.28, hue: 200, a:0.028}
+    ];
+
+    function drawNebulas() {
+        nebulas.forEach((n, idx) => {
+            const grd = ctx.createRadialGradient(n.x, n.y, n.r*0.1, n.x, n.y, n.r);
+            grd.addColorStop(0, `hsla(${n.hue}, 90%, 60%, ${n.a})`);
+            grd.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+            ctx.fill();
+        });
+    }
+
+    function connectParticles() {
+        for (let i = 0; i < particles.length; i++) {
+            const p1 = particles[i];
+            for (let j = i + 1; j < particles.length; j++) {
+                const p2 = particles[j];
+                const dx = p1.x - p2.x;
+                const dy = p1.y - p2.y;
+                const d = Math.sqrt(dx*dx + dy*dy);
+                if (d < MAX_DIST) {
+                    const alpha = 1 - (d / MAX_DIST);
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(80, 255, 180, ${alpha*0.15})`;
+                    ctx.lineWidth = 1;
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    function step() {
+        // hafif motion blur efekti
+        ctx.fillStyle = 'rgba(0,0,0,0.12)';
+        ctx.fillRect(0,0,w,h);
+
+        // nebula
+        drawNebulas();
+
+        // hareket ve çizim
+        particles.forEach(p => {
+            p.move();
+            p.draw();
+        });
+
+        // bağlantıları çiz
+        connectParticles();
+
+        requestAnimationFrame(step);
+    }
+
+    // Yeniden boyutlandırma
+    function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+        // nebula pozisyonlarını güncelle
+        nebulas[0].x = w*0.18; nebulas[0].y = h*0.12; nebulas[0].r = Math.max(w,h)*0.35;
+        nebulas[1].x = w*0.85; nebulas[1].y = h*0.85; nebulas[1].r = Math.max(w,h)*0.28;
+        initParticles();
+    }
+
+    window.addEventListener('resize', resize);
+
+    initParticles();
+    step();
+}
+
+// Terminal efekti
+function startTerminalEffect() {
+    const subtitle = document.querySelector('.subtitle');
+    if (!subtitle) return;
+
+    const originalText = subtitle.textContent;
+    const texts = [
+        "Güvenli Kart Doğrulama Sistemi",
+        "Encrypted Channel: ACTIVE",
+        "Firewall: ENABLED",
+        "Security Protocol: ACTIVE",
+        "TR Kart Desteği: ACTIVE"
+    ];
+
+    let currentIndex = 0;
+
+    setInterval(() => {
+        subtitle.style.opacity = '0';
+        setTimeout(() => {
+            subtitle.textContent = texts[currentIndex];
+            subtitle.style.opacity = '1';
+            currentIndex = (currentIndex + 1) % texts.length;
+        }, 500);
+    }, 3000);
+}
+
+// Kart numarası formatlama (XXXX XXXX XXXX XXXX)
+function formatCardNumber(e) {
+    let input = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    let formattedInput = '';
+
+    for (let i = 0; i < input.length; i++) {
+        if (i > 0 && i % 4 === 0) {
+            formattedInput += ' ';
+        }
+        formattedInput += input[i];
+    }
+    e.target.value = formattedInput;
+}
+
+// Form gönderimi
+async function handleFormSubmit(e) {
+    e.preventDefault();
+
+    const checkBtn = document.getElementById('checkBtn');
+    const btnLoader = document.getElementById('btnLoader');
+    const btnText = checkBtn.querySelector('.btn-text');
+
+    // Buton durumunu değiştir
+    if (btnText) btnText.style.opacity = '0';
+    if (btnLoader) btnLoader.style.display = 'block';
+    if (checkBtn) checkBtn.disabled = true;
+
+    // Form verilerini al
+    const ccNumber = (document.getElementById('ccNumber').value || '').replace(/\s/g, '');
+    const expMonth = document.getElementById('expMonth').value || '';
+    const expYear = document.getElementById('expYear').value || '';
+    const cvv = document.getElementById('cvv').value || '';
+    const csrfToken = document.getElementById('csrfToken').value || '';
+
+    // CSRF token kontrolü
+    if (!csrfToken) {
+        showResult('error', 'Güvenlik hatası. Lütfen sayfayı yenileyin.');
+        resetButton(checkBtn, btnLoader, btnText);
+        return;
+    }
+
+    // Validasyon
+    if (!validateInputs(ccNumber, expMonth, expYear, cvv)) {
+        showResult('error', 'Geçersiz kart bilgileri. Lütfen kontrol edin.');
+        resetButton(checkBtn, btnLoader, btnText);
+        return;
+    }
+
+    try {
+        // API'ye istek at
+        const result = await checkCard(ccNumber, expMonth, expYear, cvv, csrfToken);
+        showResult(result.status, result.message);
+    } catch (error) {
+        showResult('error', 'Bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+        resetButton(checkBtn, btnLoader, btnText);
+    }
+}
+
+// Giriş validasyonu
+function validateInputs(cc, month, year, cvv) {
+    if (cc.length < 15 || cc.length > 16) return false;
+    if (month.length !== 2 || parseInt(month) < 1 || parseInt(month) > 12) return false;
+    if (year.length !== 2) return false;
+    if (cvv.length < 3 || cvv.length > 4) return false;
+    return true;
+}
+
+// API isteği (CSRF token eklendi)
+async function checkCard(cc, month, year, cvv, csrfToken) {
+    const apiUrl = '/api/check_cc';
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                cc_number: cc,
+                exp_month: month,
+                exp_year: year,
+                cvv: cvv,
+                csrf_token: csrfToken
+            })
+        });
+
+        if (!response.ok) {
+            if (response.status === 403) {
+                window.location.reload();
+                return;
+            }
+
+            let tryData = {};
+            try { tryData = await response.json(); } catch(e){}
+            throw new Error(tryData.message || 'API hatası');
+        }
+
+        const data = await response.json();
+        return data;
+
+    } catch (error) {
+        return {
+            status: 'error',
+            message: `Bağlantı hatası: ${error.message}`
+        };
+    }
+}
+
+// Sonuç gösterme
+function showResult(status, message) {
+    const resultStatus = document.getElementById('resultStatus');
+    const resultDetails = document.getElementById('resultDetails');
+    const resultContainer = document.getElementById('resultContainer');
+
+    // Sonuç container'ını göster
+    if (resultContainer) resultContainer.style.display = 'block';
+
+    // Duruma göre stil ayarla
+    if (resultStatus) {
+        resultStatus.className = 'result-status';
+        resultStatus.classList.add(`status-${status}`);
+        if (status === 'ok' || status === 'live') {
+            resultStatus.textContent = '✅ CANLI KART';
+        } else if (status === 'dead') {
+            resultStatus.textContent = '❌ GEÇERSİZ KART';
+        } else {
+            resultStatus.textContent = '⚠️ HATA';
+        }
+    }
+
+    if (resultDetails) {
+        if (typeof message === 'object') {
+            resultDetails.textContent = JSON.stringify(message, null, 2);
+        } else {
+            resultDetails.textContent = message;
+        }
+    }
+}
+
+// Butonu sıfırlama
+function resetButton(btn, loader, text) {
+    setTimeout(() => {
+        if (loader) loader.style.display = 'none';
+        if (text) text.style.opacity = '1';
+        if (btn) btn.disabled = false;
+    }, 1000);
+}
+
+// Güvenlik önlemleri
+function implementSecurityMeasures() {
+    // F12, sağ tık, kopyalama engelleme
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12') {
+            e.preventDefault();
+            showSecurityAlert();
+            return false;
+        }
+
+        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C')) {
+            e.preventDefault();
+            showSecurityAlert();
+            return false;
+        }
+
+        if (e.ctrlKey && e.key === 'u') {                                                    e.preventDefault();
+            showSecurityAlert();
+            return false;
+        }
+    });
+
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        showSecurityAlert();
+        return false;
+    });
+
+    document.addEventListener('selectstart', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    document.addEventListener('dragstart', function(e) {                                 e.preventDefault();
+        return false;
+    });
+}
+
+// Güvenlik uyarısı
+function showSecurityAlert() {                                                       const alertDiv = document.createElement('div');
+    alertDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);                                                background: rgba(255, 0, 0, 0.9);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        z-index: 10000;
+        font-family: 'Courier New', monospace;                                           border: 2px solid #fff;
+        text-align: center;
+    `;
+    alertDiv.innerHTML = '🚫 GÜVENLİK UYARISI<br><small>Bu işlem engellendi!</small>';
+    document.body.appendChild(alertDiv);
+
+    setTimeout(() => {
+        document.body.removeChild(alertDiv);
+    }, 2000);
+}
+
+// Session süresi kontrolü
+setTimeout(() => {
+    const warningDiv = document.createElement('div');
+    warningDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 165, 0, 0.9);
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        z-index: 10000;
+        font-family: 'Courier New', monospace;
+        border: 2px solid #ffa500;
+    `;
+    warningDiv.textContent = '⚠️ Oturum süreniz dolmak üzere!';
+    document.body.appendChild(warningDiv);
+
+    setTimeout(() => {                                                                   document.body.removeChild(warningDiv);
+    }, 5000);
+}, 30 * 60 * 1000);
+    </script>
+</body>                                                                          </html>
