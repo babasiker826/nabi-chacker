@@ -1,9 +1,9 @@
-# bot.py
 from flask import (
     Flask, render_template, request, jsonify, session,
     redirect, url_for, make_response
 )
-from flask_limiter import Limiter                                                from flask_limiter.util import get_remote_address
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from functools import wraps
 from datetime import datetime, timedelta
 import os, time, re, random, string, requests, hashlib
